@@ -1,0 +1,18 @@
+{
+  "plugins": {
+    "lint": {
+      "no-shortcut-reference-link": false,
+      "no-undefined-references": false,
+      "list-item-indent": false,
+      "maximum-line-length": 160,
+      "heading-increment": false,
+      "no-multiple-toplevel-headings": false,
+      "no-missing-blank-lines": false,
+      "heading-style": false,
+      "no-duplicate-headings": false
+    }
+  },
+  "settings": {
+    "commonmark": true
+  }
+}

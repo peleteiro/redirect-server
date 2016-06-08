@@ -1,0 +1,5 @@
+cloudflare_email = ""
+cloudflare_token = ""
+do_token = ""
+domain = ""
+domain_name = ""
