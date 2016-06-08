@@ -13,6 +13,7 @@ ADD ./root /
 ADD . /tmp/build/src/github.com/peleteiro/redirect-server
 
 RUN export GOPATH=/tmp/build \
+ && go get golang.org/x/net/publicsuffix/... \
  && go build -o /usr/bin/redirect-server github.com/peleteiro/redirect-server \
  && rm -rf /tmp/build
 

@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	"golang.org/x/net/publicsuffix"
+	"net/url"
 	"strings"
 )
 
@@ -21,18 +24,23 @@ func main() {
 }
 
 func getRedirectHost(host string) string {
-	domainParts := strings.Split(strings.Split(host, ":")[0], ".")
+	urlParts, _ := url.Parse(fmt.Sprintf("https://%s", host))
+	tld, _ := publicsuffix.PublicSuffix(urlParts.Host)
 
-	var domain string
+	hostParts := strings.Split(host, fmt.Sprintf("%s", tld))
+	hostParts = strings.Split(strings.TrimSuffix(hostParts[0], "."), ".")
 
-	if last(domainParts) == "br" {
-		domain = strings.Join(domainParts[len(domainParts)-3:], ".")
-	} else {
-		domain = strings.Join(domainParts[len(domainParts)-2:], ".")
+	domain := fmt.Sprintf("%s.%s", last(hostParts), tld)
+	if hostParts[0] != "www" {
+		domain = fmt.Sprintf("www.%s", domain)
 	}
 
-	if domainParts[0] != "www" {
-		domain = strings.Join([]string{"www", domain}, ".")
+	domain = fmt.Sprintf("%s%s", domain, urlParts.Path)
+	if urlParts.RawQuery != "" {
+		domain = fmt.Sprintf("%s?%s", domain, urlParts.RawQuery)
+	}
+	if urlParts.Fragment != "" {
+		domain = fmt.Sprintf("%s#%s", domain, urlParts.Fragment)
 	}
 
 	return domain
