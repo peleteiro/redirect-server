@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"golang.org/x/net/publicsuffix"
-	"net/url"
+	"net"
+	"net/http"
+	"os"
 	"strings"
 )
+
+var PORT = "8080"
+var SERVICE_FQDN string = "foo.com"
+var SERVICE_FQDN_SUFFIX string = ".foo.com."
 
 func redirect(w http.ResponseWriter, domain string, path string) {
 	url := strings.Join([]string{"https://", domain, path}, "")
@@ -19,31 +24,54 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	if os.Getenv("PORT") == "" {
+		PORT = os.Getenv("PORT")
+	}
+	SERVICE_FQDN = os.Getenv("SERVICE_FQDN")
+	if SERVICE_FQDN == "" {
+		print("Must have an env variable `SERVICE_FQDN`.")
+		os.Exit(1)
+	}
+	SERVICE_FQDN_SUFFIX = fmt.Sprintf(".%s.", SERVICE_FQDN)
 	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(fmt.Sprintf(":%s", PORT), nil)
 }
 
 func getRedirectHost(host string) string {
-	urlParts, _ := url.Parse(fmt.Sprintf("https://%s", host))
-	tld, _ := publicsuffix.PublicSuffix(urlParts.Host)
+	cname, err := net.LookupCNAME(host)
+	if err != nil || cname == "" {
+		return getRedirectHostByHost(host)
+	}
+	redirectHost := GetRedirectHostByCNAME(cname)
+	if redirectHost == "" {
+		return getRedirectHostByHost(host)
+	}
+	return redirectHost
+}
 
-	hostParts := strings.Split(host, fmt.Sprintf("%s", tld))
-	hostParts = strings.Split(strings.TrimSuffix(hostParts[0], "."), ".")
+func getRedirectHostByHost(host string) string {
+	tld, _ := publicsuffix.PublicSuffix(host)
 
-	domain := fmt.Sprintf("%s.%s", last(hostParts), tld)
-	if hostParts[0] != "www" {
-		domain = fmt.Sprintf("www.%s", domain)
+	hostParts := strings.Split(strings.TrimSuffix(host, fmt.Sprintf(".%s", tld)), ".")
+	name := last(hostParts)
+
+	if hostParts[0] == "www" {
+		return fmt.Sprintf("%s.%s", name, tld)
 	}
 
-	domain = fmt.Sprintf("%s%s", domain, urlParts.Path)
-	if urlParts.RawQuery != "" {
-		domain = fmt.Sprintf("%s?%s", domain, urlParts.RawQuery)
-	}
-	if urlParts.Fragment != "" {
-		domain = fmt.Sprintf("%s#%s", domain, urlParts.Fragment)
+	return fmt.Sprintf("www.%s.%s", name, tld)
+}
+
+func GetRedirectHostByCNAME(cname string) string {
+	if cname == "" {
+		return ""
 	}
 
-	return domain
+	if !strings.HasSuffix(cname, SERVICE_FQDN_SUFFIX) {
+		return ""
+	}
+
+	return strings.TrimSuffix(cname, SERVICE_FQDN_SUFFIX)
 }
 
 func last(list []string) string {

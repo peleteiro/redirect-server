@@ -1,6 +1,6 @@
 # redirect-server
 
-Redirects every request to https and to root or www subdomain.
+Performs a DNS lookup and redirect the user to your specified domain.
 
 ## [Docker](https://www.docker.com/)
 
@@ -19,7 +19,3 @@ Date: Wed, 08 Jun 2016 20:38:48 GMT
 Content-Length: 0
 Content-Type: text/plain; charset=utf-8
 ```
-
-## [Terraform](https://www.terraform.io/)
-
-Terraform configuration to run `redirect-server` on [Digital Ocean](https://www.digitalocean.com/) is included in this repository on [`/terraform` directory](https://github.com/peleteiro/redirect-server/tree/master/terraform)

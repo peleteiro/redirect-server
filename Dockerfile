@@ -4,11 +4,9 @@ MAINTAINER Jose Peleteiro <jose@peleteiro.net>
 RUN apk update \
  && apk upgrade \
  && apk add \
-            s6 bash curl make git \
-            go \
+            bash curl make git dumb-init \
+            go libc-dev \
  && rm -rf /var/cache/apk/*
-
-ADD ./root /
 
 ADD . /tmp/build/src/github.com/peleteiro/redirect-server
 
@@ -17,6 +15,8 @@ RUN export GOPATH=/tmp/build \
  && go build -o /usr/bin/redirect-server github.com/peleteiro/redirect-server \
  && rm -rf /tmp/build
 
-CMD ["/bin/s6-svscan", "/etc/s6"]
+ENV SERVER_FQDN redirect.foo.com
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["/usr/bin/redirect-server"]
 
 EXPOSE 8080
